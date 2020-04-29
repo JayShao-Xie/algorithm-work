@@ -1,70 +1,63 @@
-#include<stdio.h>
-#include<math.h>
+#include<cstdio>
+#include<cmath>
 #include<algorithm>
+#include<iostream>
+#include<cstring>
+#include<string>
+#include<map>
 #include<vector>
+#include<set>
+#include<stack>
+#include<queue>
 using namespace std;
-struct Point {
-	int x, y;
+const int inf = 0x3f3f3f3f;
+const int maxn = 1e5 + 7;
+struct node {
+	double x, y;
+}a[maxn], b[maxn];
+struct ruleX {
+	bool operator()(const node& a, const node& b) {
+		return a.x < b.x;
+	}
 };
-int n;
-bool cmp(struct Point& a, struct Point& b) {     //按照x坐标从小到大排序
-	return a.x < b.x;
-}
-bool cmp2(struct Point& a, struct Point& b) {     //按照y坐标从小到大排序
-	return a.y < b.y;
-}
-double Dis(Point a, Point b) {
+struct ruleY {
+	bool operator()(const node& a, const node& b) {
+		return a.y < b.y;
+	}
+};
+
+double dis(node a, node b) {
 	return sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y));
 }
-/*----------以下为最近对问题算法----------*/ 
-double ClosestPoint(vector<Point> points, int left, int right) {
-	if (right - left < 2)return 0x3f3f3f3f;
-	if (right - left == 2) {
-		return Dis(points[left], points[right - 1]);
-	}
-	if (right - left == 3) {
-		double d1 = Dis(points[left], points[right - 1]);
-		double d2 = Dis(points[left], points[right - 2]);
-		double d3 = Dis(points[right - 2], points[right - 1]);
-		return min(d1, min(d2, d3));
-	}
-	int mid = (right + left) / 2;
-	int mm = points[mid].x;
-	double dl = ClosestPoint(points, left, mid);      //左边区域最短距离
-	double dr = ClosestPoint(points, mid, right);     //右边区域最短距离
-	double minn = min(dl, dr);
-	vector<Point>v;
-	for (int i = left; i < mid; ++i) {
-		if (mm - points[i].x <= minn)
-			v.push_back(points[i]);
-	}
-	for (int i = mid; i < right; ++i) {
-		if (points[i].x - minn <= mm)
-			v.push_back(points[i]);
-	}
-	sort(v.begin(), v.end(), cmp2);
-	for (int i = 0; i < v.size(); ++i) {            //处理分隔线两边的点
-		for (int j = i+1; j < v.size(); ++j) {
-			if (abs(v[i].y - v[j].y) < minn) {
-				double d = Dis(v[i], v[j]);
-				if (d < minn) minn = d;
-			}
-			else {
-				break;
-			}
+double minDis(int l, int r) {
+	if (r - l + 1 == 2) return dis(a[l], a[r]);
+	if (r - l + 1 == 3) return min(dis(a[l], a[l + 1]), dis(a[l + 1], a[r]));
+	int mid = (l + r) >> 1;
+	//printf("debug\n");
+	double d = min(minDis(l, mid), minDis(mid + 1, r));
+	int k = 0;
+	for (int i = l; i <= r; i++) {
+		if (fabs(a[i].x - a[mid].x) <= d) {
+			b[k++] = a[i];
 		}
 	}
-	return minn;
-}
-/*----------以上为最近对问题算法----------*/ 
-int main() {
-	vector<Point>points;
-	scanf("%d", &n);
-	for (int i = 1; i <= n; ++i) {
-		Point point;
-		scanf("%d %d", &point.x, &point.y);
-		points.push_back(point);
+	sort(b, b + k, ruleY());
+	for (int i = 0; i < k; i++) {
+		for (int j = i + 1; j < k && j < i + 6; j++) {
+			d = min(d, dis(b[i], b[j]));
+		}
 	}
-	sort(points.begin(), points.end(), cmp);      //按照x坐标从小到大排序
-	printf("%.2f\n", ClosestPoint(points, 0, n));
+	return d;
+}
+
+int main() {
+	int n;
+	while (scanf("%d", &n) != EOF) {
+		if (n == 0)break;
+		for (int i = 1; i <= n; i++) {
+			scanf("%lf %lf", &a[i].x, &a[i].y);
+		}
+		sort(a + 1, a + 1 + n, ruleX());
+		printf("%.2f\n", minDis(1, n) / 2.0);
+	}
 }
